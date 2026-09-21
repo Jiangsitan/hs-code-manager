@@ -1,0 +1,737 @@
+<!-- LucasJay 17302732991 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仁昊伟业HS编码管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .btn-primary { @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md; }
+        .btn-success { @apply bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md; }
+        .btn-danger { @apply bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg transition-all duration-200; }
+        .btn-secondary { @apply bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-all duration-200; }
+        .input-field { @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 outline-none; }
+        .card { @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6; }
+        .stat-card { @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200; }
+        .table-row:hover { @apply bg-blue-50; }
+        .badge-sync { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800; }
+        .badge-manual { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800; }
+        .search-result-item:hover { @apply bg-blue-50; }
+        .truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-sm">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">仁昊伟业HS编码·管理系统</h1>
+                        <p class="text-xs text-gray-500">归类编号 · 报关品名 · 申报要素</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-gray-500" id="currentTime"></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">总数</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-1" id="totalCount">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">同步数据</p>
+                        <p class="text-3xl font-bold text-blue-600 mt-1" id="syncCount">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">手动添加</p>
+                        <p class="text-3xl font-bold text-amber-600 mt-1" id="manualCount">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作栏 -->
+        <div class="card mb-6">
+            <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div class="flex-1 w-full sm:w-auto">
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="搜索归类编号、中文名、英文名..." class="input-field pl-10">
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="openAddModal()" class="btn-primary flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        新增
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据表格 -->
+        <div class="card overflow-hidden p-0">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200">
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">归类编号</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">商品名称</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">商品描述</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">报关品名（中文）</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">报关品名（英文）</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider max-w-[180px]">申报要素</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">第一单位</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">第二单位</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">出口退税率</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">最惠国税率</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">普通税率</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">海关监管</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">来源</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100" id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+            <div id="emptyState" class="hidden py-16 text-center">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+                <p class="text-gray-500 text-lg">暂无数据</p>
+                <p class="text-gray-400 text-sm mt-1">点击"新增"按钮添加HS编码</p>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
+                <div class="text-sm text-gray-500">
+                    共 <span id="totalRecords" class="font-medium text-gray-700">0</span> 条记录
+                </div>
+                <div class="flex items-center gap-2" id="pagination">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 新增/编辑弹窗 -->
+    <div id="formModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closeFormModal()"></div>
+        <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-5xl md:max-h-[92vh] bg-white rounded-2xl shadow-2xl flex flex-col fade-in">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900" id="formTitle">新增HS编码</h3>
+                <button onclick="closeFormModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="hsCodeForm" class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                <input type="hidden" id="isEdit" value="false">
+
+                <!-- 远程搜索区域（仅新增模式显示） -->
+                <div id="remoteSearchSection">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">商品搜索</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="searchNameInput" class="input-field flex-1" placeholder="输入品名关键词，如：商品编码、名称等">
+                        <button type="button" onclick="remoteSearch()" id="remoteSearchBtn" class="btn-success whitespace-nowrap flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            搜索
+                        </button>
+                    </div>
+                    <!-- 搜索结果列表 -->
+                    <div id="searchResults" class="hidden mt-2 border border-gray-200 rounded-lg max-h-[420px] overflow-y-auto bg-white shadow-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">归类编号 <span class="text-red-500">*</span></label>
+                        <input type="text" id="formHsCode" class="input-field" placeholder="选择搜索结果后自动填入" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">来源</label>
+                        <select id="formDataSource" class="input-field">
+                            <option value="manual">手动添加</option>
+                            <option value="sync">远程查询</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">商品名称</label>
+                    <input type="text" id="formProductName" class="input-field" placeholder="如: 改良种用马">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">商品描述</label>
+                    <textarea id="formProductDescription" class="input-field" rows="2" placeholder="如: 如接头、衬管及法兰等"></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">报关品名（中文）<span class="text-xs text-gray-400 font-normal ml-1">人工补录</span></label>
+                        <input type="text" id="formProductNameCn" class="input-field" placeholder="留空，后期人工补录">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">报关品名（英文）<span class="text-xs text-gray-400 font-normal ml-1">人工补录</span></label>
+                        <input type="text" id="formProductNameEn" class="input-field" placeholder="留空，后期人工补录">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">申报要素</label>
+                    <textarea id="formDeclarationElements" class="input-field" rows="2" placeholder="如: 1:品名;2:用途;3:品种"></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">法定第一单位</label>
+                        <input type="text" id="formFirstUnit" class="input-field" placeholder="如: 头">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">法定第二单位</label>
+                        <input type="text" id="formSecondUnit" class="input-field" placeholder="如: 千克">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">出口退税率</label>
+                        <input type="text" id="formExportTaxRebateRate" class="input-field" placeholder="如: 0%">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">最惠国税率</label>
+                        <input type="text" id="formMfnRate" class="input-field" placeholder="如: 10%">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">普通税率</label>
+                        <input type="text" id="formCommonRate" class="input-field" placeholder="如: 30%">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">进口增值税</label>
+                        <input type="text" id="formImportVat" class="input-field" placeholder="如: 13%">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">进口消费税</label>
+                        <input type="text" id="formImportConsumptionTax" class="input-field" placeholder="如: 0%">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">海关监管条件</label>
+                        <input type="text" id="formCustomsSupervision" class="input-field" placeholder="如: A">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">归类参考（常见报关品名及占比）</label>
+                    <input type="text" id="formClassificationReference" class="input-field" placeholder="如: 马(约89%);退役赛马(约4%)">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">检验检疫</label>
+                    <textarea id="formInspectionQuarantine" class="input-field" rows="2" placeholder="如: P/Q"></textarea>
+                </div>
+            </form>
+            <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                <button type="button" onclick="closeFormModal()" class="btn-secondary">取消</button>
+                <button type="submit" form="hsCodeForm" class="btn-primary" id="formSubmitBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closeDeleteModal()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 fade-in">
+            <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 text-center">确认删除</h3>
+            <p class="text-gray-500 text-center mt-2">确定要删除HS编码 <span id="deleteHsCode" class="font-medium text-gray-900"></span> 吗？</p>
+            <div class="flex items-center justify-center gap-3 mt-6">
+                <button onclick="closeDeleteModal()" class="btn-secondary flex-1">取消</button>
+                <button onclick="confirmDelete()" class="btn-danger flex-1 py-2.5">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closeDetailModal()"></div>
+        <div class="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col fade-in">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">HS编码详情</h3>
+                <button onclick="closeDetailModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4" id="detailContent">
+            </div>
+            <div class="flex justify-end px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                <button onclick="closeDetailModal()" class="btn-secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed top-4 right-4 z-[60] hidden">
+        <div class="bg-gray-900 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 fade-in">
+            <svg id="toastIcon" class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/hs-codes';
+        let currentPage = 1;
+        let currentKeyword = '';
+        let deleteTarget = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadData();
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            let searchTimer;
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    currentKeyword = e.target.value;
+                    currentPage = 1;
+                    loadData();
+                }, 300);
+            });
+
+            document.getElementById('hsCodeForm').addEventListener('submit', handleSubmit);
+        });
+
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleString('zh-CN');
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`${API_BASE}/stats`);
+                const data = await res.json();
+                if (data.code === 200) {
+                    animateNumber('totalCount', data.data.totalCount);
+                    animateNumber('syncCount', data.data.syncCount);
+                    animateNumber('manualCount', data.data.manualCount);
+                }
+            } catch (e) { console.error('加载统计失败:', e); }
+        }
+
+        function animateNumber(id, target) {
+            const el = document.getElementById(id);
+            const start = parseInt(el.textContent) || 0;
+            const diff = target - start;
+            const duration = 500;
+            const startTime = performance.now();
+            function update(time) {
+                const elapsed = time - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                el.textContent = Math.round(start + diff * progress);
+                if (progress < 1) requestAnimationFrame(update);
+            }
+            requestAnimationFrame(update);
+        }
+
+        async function loadData() {
+            try {
+                let url = `${API_BASE}?page=${currentPage}&size=10`;
+                if (currentKeyword) url += `&keyword=${encodeURIComponent(currentKeyword)}`;
+                const res = await fetch(url);
+                const result = await res.json();
+                if (result.code === 200) {
+                    renderTable(result.data.records);
+                    renderPagination(result.data);
+                }
+            } catch (e) { console.error('加载数据失败:', e); }
+        }
+
+        function renderTable(records) {
+            const tbody = document.getElementById('tableBody');
+            const empty = document.getElementById('emptyState');
+            if (!records || records.length === 0) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            tbody.innerHTML = records.map(r => `
+                <tr class="table-row transition-colors cursor-pointer" onclick="viewDetail('${r.hsCode}')">
+                    <td class="px-5 py-4">
+                        <span class="font-mono text-sm font-semibold text-blue-600">${r.hsCode || '-'}</span>
+                    </td>
+                    <td class="px-5 py-4 text-sm text-gray-900 max-w-[160px] truncate" title="${r.productName || ''}">${r.productName || '-'}</td>
+                    <td class="px-5 py-4 text-sm text-gray-500 max-w-[160px] truncate" title="${r.productDescription || ''}">${r.productDescription || '-'}</td>
+                    <td class="px-5 py-4 text-sm text-gray-600 max-w-[140px] truncate" title="${r.productNameCn || ''}">${r.productNameCn || '-'}</td>
+                    <td class="px-5 py-4 text-sm text-gray-500 max-w-[140px] truncate" title="${r.productNameEn || ''}">${r.productNameEn || '-'}</td>
+                    <td class="px-5 py-4 text-sm text-gray-600 max-w-[180px] truncate" title="${r.declarationElements || ''}">${r.declarationElements || '-'}</td>
+                    <td class="px-5 py-4 text-sm text-gray-700">${r.firstUnit || '-'}</td>
+                    <td class="px-5 py-4 text-sm text-gray-700">${r.secondUnit || '-'}</td>
+                    <td class="px-5 py-4 text-sm text-gray-700">${r.exportTaxRebateRate || '-'}</td>
+                    <td class="px-5 py-4 text-sm text-gray-700">${r.mfnRate || '-'}</td>
+                    <td class="px-5 py-4 text-sm text-gray-700">${r.commonRate || '-'}</td>
+                    <td class="px-5 py-4 text-sm text-gray-700">${r.customsSupervision || '-'}</td>
+                    <td class="px-5 py-4">
+                        <span class="${r.dataSource === 'sync' ? 'badge-sync' : 'badge-manual'}">
+                            ${r.dataSource === 'sync' ? '同步' : '手动'}
+                        </span>
+                    </td>
+                    <td class="px-5 py-4" onclick="event.stopPropagation()">
+                        <div class="flex items-center gap-2">
+                            <button onclick="openEditModal('${r.hsCode}')" class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1.5 rounded-lg transition-colors" title="编辑">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </button>
+                            <button onclick="openDeleteModal('${r.hsCode}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="删除">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderPagination(page) {
+            const { pages, current, total } = page;
+            document.getElementById('totalRecords').textContent = total;
+            const container = document.getElementById('pagination');
+            if (pages <= 1) { container.innerHTML = ''; return; }
+            let html = '';
+            html += `<button onclick="goToPage(${current - 1})" class="px-3 py-1.5 rounded-lg text-sm ${current === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-200'}" ${current === 1 ? 'disabled' : ''}>上一页</button>`;
+            const start = Math.max(1, current - 2);
+            const end = Math.min(pages, current + 2);
+            if (start > 1) html += `<button onclick="goToPage(1)" class="px-3 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-gray-200">1</button><span class="text-gray-400">...</span>`;
+            for (let i = start; i <= end; i++) {
+                html += `<button onclick="goToPage(${i})" class="px-3 py-1.5 rounded-lg text-sm ${i === current ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'}">${i}</button>`;
+            }
+            if (end < pages) html += `<span class="text-gray-400">...</span><button onclick="goToPage(${pages})" class="px-3 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-gray-200">${pages}</button>`;
+            html += `<button onclick="goToPage(${current + 1})" class="px-3 py-1.5 rounded-lg text-sm ${current === pages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-200'}" ${current === pages ? 'disabled' : ''}>下一页</button>`;
+            container.innerHTML = html;
+        }
+
+        function goToPage(p) { currentPage = p; loadData(); }
+
+        function openAddModal() {
+            document.getElementById('isEdit').value = 'false';
+            document.getElementById('formTitle').textContent = '新增HS编码';
+            document.getElementById('formHsCode').disabled = false;
+            document.getElementById('hsCodeForm').reset();
+            document.getElementById('formDataSource').value = 'manual';
+            document.getElementById('remoteSearchSection').classList.remove('hidden');
+            document.getElementById('searchResults').classList.add('hidden');
+            document.getElementById('searchNameInput').value = '';
+            document.getElementById('formModal').classList.remove('hidden');
+        }
+
+        // 远程搜索（按品名）
+        async function remoteSearch() {
+            const keyword = document.getElementById('searchNameInput').value.trim();
+            if (!keyword) {
+                showToast('请输入品名关键词', 'error');
+                return;
+            }
+            const btn = document.getElementById('remoteSearchBtn');
+            const origText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>搜索中...';
+            try {
+                const res = await fetch(`${API_BASE}/remote-search?keyword=${encodeURIComponent(keyword)}`);
+                const result = await res.json();
+                const container = document.getElementById('searchResults');
+                 if (result.code === 200 && result.data.length > 0) {
+                    // 按数据来源站点标识（hsguilei=归类通 / hsbianma=HS编码网）
+                    container.innerHTML = `
+                        <div class="px-4 py-2 bg-blue-50 border-b border-blue-100 text-xs text-blue-700 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            共 ${result.data.length} 条结果（hsguilei.com + hsbianma.com 双源合并）
+                        </div>
+                        ${result.data.map(r => {
+                            const fromHsguilei = r.sourceSite !== 'hsbianma';
+                            const name = r.productName || '';
+                            const descr = r.productDescription || '';
+                            return `
+                            <div class="search-result-item px-4 py-3 cursor-pointer border-b border-gray-100 last:border-0"
+                                 onclick="selectSearchResult('${r.hsCode}')">
+                                <div class="flex items-center gap-3">
+                                    <span class="font-mono text-sm font-semibold text-blue-600">${r.hsCode}</span>
+                                    <span class="text-sm text-gray-900">${name}</span>
+                                    <span class="text-[10px] px-1.5 py-0.5 rounded ${fromHsguilei ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${fromHsguilei ? '归类通' : 'HS编码网'}</span>
+                                </div>
+                                ${descr ? `<div class="text-xs text-gray-500 mt-1">${descr}</div>` : ''}
+                                <div class="flex items-center gap-4 mt-1.5 text-xs text-gray-500">
+                                    ${r.exportTaxRebateRate ? `<span>退税率: <span class="text-emerald-600 font-medium">${r.exportTaxRebateRate}</span></span>` : ''}
+                                    ${r.mfnRate ? `<span>最惠国: <span class="text-orange-600 font-medium">${r.mfnRate}</span></span>` : ''}
+                                    ${r.commonRate ? `<span>普通: <span class="text-red-600 font-medium">${r.commonRate}</span></span>` : ''}
+                                </div>
+                            </div>
+                        `}).join('')}
+                    `;
+                    container.classList.remove('hidden');
+                } else {
+                    container.innerHTML = `
+                        <div class="px-4 py-6 text-center text-gray-500 text-sm">
+                            <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            <p class="font-medium text-gray-600 mb-1">未找到"${keyword}"相关结果</p>
+                            <p class="text-xs text-gray-400">建议：使用HS编码（如8544）或标准品名（如"电线"、"电缆"、"马"）搜索</p>
+                        </div>
+                    `;
+                    container.classList.remove('hidden');
+                }
+            } catch (e) {
+                showToast('搜索失败: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origText;
+            }
+        }
+
+        // 选择搜索结果 → 拉取详情 → 填充表单
+        async function selectSearchResult(hsCode) {
+            document.getElementById('searchResults').classList.add('hidden');
+            try {
+                const res = await fetch(`${API_BASE}/remote-query?hsCode=${encodeURIComponent(hsCode)}`);
+                const result = await res.json();
+                if (result.code === 200) {
+                    const d = result.data;
+                    document.getElementById('formHsCode').value = d.hsCode || hsCode;
+                    document.getElementById('formProductName').value = d.productName || '';
+                    document.getElementById('formProductDescription').value = d.productDescription || '';
+                    document.getElementById('formProductNameCn').value = '';
+                    document.getElementById('formProductNameEn').value = '';
+                    document.getElementById('formDeclarationElements').value = d.declarationElements || '';
+                    document.getElementById('formFirstUnit').value = d.firstUnit || '';
+                    document.getElementById('formSecondUnit').value = d.secondUnit || '';
+                    document.getElementById('formExportTaxRebateRate').value = d.exportTaxRebateRate || '';
+                    document.getElementById('formMfnRate').value = d.mfnRate || '';
+                    document.getElementById('formCommonRate').value = d.commonRate || '';
+                    document.getElementById('formImportVat').value = d.importVat || '';
+                    document.getElementById('formImportConsumptionTax').value = d.importConsumptionTax || '';
+                    document.getElementById('formClassificationReference').value = d.classificationReference || '';
+                    document.getElementById('formCustomsSupervision').value = d.customsSupervision || '';
+                    document.getElementById('formInspectionQuarantine').value = d.inspectionQuarantine || '';
+                    document.getElementById('formDataSource').value = 'sync';
+                    showToast('已填入详情，请核对后保存');
+                } else {
+                    showToast(result.message || '查询详情失败', 'error');
+                }
+            } catch (e) {
+                showToast('查询详情失败: ' + e.message, 'error');
+            }
+        }
+
+        async function openEditModal(hsCode) {
+            try {
+                const res = await fetch(`${API_BASE}/${hsCode}`);
+                const result = await res.json();
+                if (result.code === 200) {
+                    const d = result.data;
+                    document.getElementById('isEdit').value = 'true';
+                    document.getElementById('formTitle').textContent = '编辑HS编码';
+                    document.getElementById('formHsCode').value = d.hsCode;
+                    document.getElementById('formHsCode').disabled = true;
+                    document.getElementById('remoteSearchSection').classList.add('hidden');
+                    document.getElementById('formProductName').value = d.productName || '';
+                    document.getElementById('formProductDescription').value = d.productDescription || '';
+                    document.getElementById('formProductNameCn').value = d.productNameCn || '';
+                    document.getElementById('formProductNameEn').value = d.productNameEn || '';
+                    document.getElementById('formDeclarationElements').value = d.declarationElements || '';
+                    document.getElementById('formFirstUnit').value = d.firstUnit || '';
+                    document.getElementById('formSecondUnit').value = d.secondUnit || '';
+                    document.getElementById('formExportTaxRebateRate').value = d.exportTaxRebateRate || '';
+                    document.getElementById('formMfnRate').value = d.mfnRate || '';
+                    document.getElementById('formCommonRate').value = d.commonRate || '';
+                    document.getElementById('formImportVat').value = d.importVat || '';
+                    document.getElementById('formImportConsumptionTax').value = d.importConsumptionTax || '';
+                    document.getElementById('formClassificationReference').value = d.classificationReference || '';
+                    document.getElementById('formCustomsSupervision').value = d.customsSupervision || '';
+                    document.getElementById('formInspectionQuarantine').value = d.inspectionQuarantine || '';
+                    document.getElementById('formDataSource').value = d.dataSource || 'manual';
+                    document.getElementById('formModal').classList.remove('hidden');
+                }
+            } catch (e) { showToast('获取数据失败', 'error'); }
+        }
+
+        function closeFormModal() { document.getElementById('formModal').classList.add('hidden'); }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const isEdit = document.getElementById('isEdit').value === 'true';
+            const body = {
+                productName: document.getElementById('formProductName').value || null,
+                productDescription: document.getElementById('formProductDescription').value || null,
+                productNameCn: document.getElementById('formProductNameCn').value || null,
+                productNameEn: document.getElementById('formProductNameEn').value || null,
+                declarationElements: document.getElementById('formDeclarationElements').value || null,
+                firstUnit: document.getElementById('formFirstUnit').value || null,
+                secondUnit: document.getElementById('formSecondUnit').value || null,
+                exportTaxRebateRate: document.getElementById('formExportTaxRebateRate').value || null,
+                mfnRate: document.getElementById('formMfnRate').value || null,
+                commonRate: document.getElementById('formCommonRate').value || null,
+                importVat: document.getElementById('formImportVat').value || null,
+                importConsumptionTax: document.getElementById('formImportConsumptionTax').value || null,
+                classificationReference: document.getElementById('formClassificationReference').value || null,
+                customsSupervision: document.getElementById('formCustomsSupervision').value || null,
+                inspectionQuarantine: document.getElementById('formInspectionQuarantine').value || null,
+                dataSource: document.getElementById('formDataSource').value,
+            };
+            try {
+                let res;
+                if (isEdit) {
+                    const hsCode = document.getElementById('formHsCode').value;
+                    res = await fetch(`${API_BASE}/${hsCode}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                } else {
+                    body.hsCode = document.getElementById('formHsCode').value;
+                    if (!body.hsCode) { showToast('请填写归类编号', 'error'); return; }
+                    res = await fetch(API_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                }
+                const result = await res.json();
+                if (result.code === 200) {
+                    showToast(isEdit ? '更新成功' : '新增成功');
+                    closeFormModal();
+                    loadData();
+                    loadStats();
+                } else {
+                    showToast(result.message || '操作失败', 'error');
+                }
+            } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
+        }
+
+        function openDeleteModal(hsCode) {
+            deleteTarget = hsCode;
+            document.getElementById('deleteHsCode').textContent = hsCode;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+        function closeDeleteModal() { document.getElementById('deleteModal').classList.add('hidden'); }
+        async function confirmDelete() {
+            try {
+                const res = await fetch(`${API_BASE}/${deleteTarget}`, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.code === 200) {
+                    showToast('删除成功');
+                    closeDeleteModal();
+                    loadData();
+                    loadStats();
+                } else {
+                    showToast(result.message || '删除失败', 'error');
+                }
+            } catch (e) { showToast('删除失败', 'error'); }
+        }
+
+        async function viewDetail(hsCode) {
+            try {
+                const res = await fetch(`${API_BASE}/${hsCode}`);
+                const result = await res.json();
+                if (result.code === 200) {
+                    const d = result.data;
+                    document.getElementById('detailContent').innerHTML = `
+                        <div class="flex items-center gap-3 pb-4 border-b border-gray-100">
+                            <span class="font-mono text-2xl font-bold text-blue-600">${d.hsCode}</span>
+                            <span class="${d.dataSource === 'sync' ? 'badge-sync' : 'badge-manual'} text-sm">${d.dataSource === 'sync' ? '同步' : '手动'}</span>
+                        </div>
+                        <h4 class="text-sm font-semibold text-gray-700 mt-4 mb-2">基本信息</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${detailItem('商品名称', d.productName)}
+                            ${detailItem('商品描述', d.productDescription)}
+                            ${detailItem('报关品名（中文）', d.productNameCn)}
+                            ${detailItem('报关品名（英文）', d.productNameEn)}
+                            ${detailItem('法定第一单位', d.firstUnit)}
+                            ${detailItem('法定第二单位', d.secondUnit)}
+                        </div>
+                        <h4 class="text-sm font-semibold text-gray-700 mt-4 mb-2">税率信息</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            ${detailItem('最惠国税率', d.mfnRate)}
+                            ${detailItem('普通税率', d.commonRate)}
+                            ${detailItem('出口退税率', d.exportTaxRebateRate)}
+                            ${detailItem('进口增值税', d.importVat)}
+                            ${detailItem('进口消费税', d.importConsumptionTax)}
+                        </div>
+                        ${detailFullItem('申报要素', d.declarationElements)}
+                        ${d.classificationReference ? `
+                        <div class="pt-2">
+                            <span class="text-sm text-gray-500">归类参考（常见报关品名及占比）</span>
+                            <div class="flex flex-wrap gap-2 mt-1">
+                                ${d.classificationReference.split(';').map(item => {
+                                    const match = item.match(/^(.+?)\((.+)\)$/);
+                                    return match ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">${match[1]} <span class="ml-1 text-blue-500">${match[2]}</span></span>` : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-50 text-gray-700">${item}</span>`;
+                                }).join('')}
+                            </div>
+                        </div>` : ''}
+                        ${detailFullItem('海关监管条件', d.customsSupervision)}
+                        ${detailFullItem('检验检疫', d.inspectionQuarantine)}
+                        <div class="grid grid-cols-2 gap-4 pt-2 text-sm text-gray-500 border-t border-gray-100 mt-4">
+                            <div>创建时间: ${d.createdAt ? new Date(d.createdAt).toLocaleString('zh-CN') : '-'}</div>
+                            <div>更新时间: ${d.updatedAt ? new Date(d.updatedAt).toLocaleString('zh-CN') : '-'}</div>
+                        </div>
+                    `;
+                    document.getElementById('detailModal').classList.remove('hidden');
+                }
+            } catch (e) { showToast('获取详情失败', 'error'); }
+        }
+        function detailItem(label, value) { return `<div><span class="text-sm text-gray-500">${label}</span><p class="text-sm font-medium text-gray-900 mt-0.5">${value || '-'}</p></div>`; }
+        function detailFullItem(label, value) { return value ? `<div class="pt-2"><span class="text-sm text-gray-500">${label}</span><p class="text-sm text-gray-900 mt-0.5 whitespace-pre-wrap">${value}</p></div>` : ''; }
+        function closeDetailModal() { document.getElementById('detailModal').classList.add('hidden'); }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastMessage').textContent = msg;
+            icon.className = type === 'success' ? 'w-5 h-5 text-green-400' : 'w-5 h-5 text-red-400';
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+    </script>
+</body>
+</html>
